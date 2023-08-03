@@ -6,11 +6,6 @@ import scipy.linalg as linalg
 import matplotlib.pyplot as plt
 import pandas as pd
 
-#FID
-from torchvision.transforms import ToTensor
-from torchvision.models import inception_v3
-from torch.nn.functional import adaptive_avg_pool2d
-
 #MMD metric
 def guassian_kernel(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None):
 
