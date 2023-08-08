@@ -1,12 +1,17 @@
+import pandas as pd
+import numpy as np
+import os
+import glob
+
+# Transform float and int number into a 32-bit fixed point 
+# binary number with 12 bits as the fraction part
 def float_bin(number, places = 12):
     resstr = ""
     if number.find('.') != -1 :
         # split() separates whole number and decimal
-        # part and stores it in two separate variables
         whole, dec = str(number).split(".")
 
-        # Convert both whole number and decimal 
-        # part from string type to integer type
+        # Convert both whole number and decimal
         whole = int(whole)
         dec = int (dec)
         dec = decimal_converter(dec)
@@ -20,10 +25,7 @@ def float_bin(number, places = 12):
             i -= 1
         
         # Convert the whole number part to it's
-        # respective binary form and remove the
-        # "0b" from it.
-        # res = bin(whole).lstrip("0b") + "."
-        # res ='{0:020b}'.format(whole)
+        # respective binary form
         
         i = 31
         dec = dec * 2**12
@@ -55,12 +57,7 @@ def decimal_converter(num):
         num /= 10
     return num
 
-
-import pandas as pd
-import numpy as np
-import os
-import glob
-
+# Create file for each design point and save the transformed number
 def create_csv_files(Input, partname, benchmarkname, number_of_files_in_each_benchmark, number_of_variable_in_each_run):
     try:
         os.makedirs("./20_polybench/" + benchmarkname +"/" + partname + "/", exist_ok=True)  # Make a directory to save created files.
@@ -79,7 +76,7 @@ def create_csv_files(Input, partname, benchmarkname, number_of_files_in_each_ben
         file_name = "./20_polybench/" + benchmarkname +"/"+ partname + "/" + benchmarkname + str(eval("i")) + str(eval("Input[i][0]")) + "_20.csv" # This creates file_name
         np.savetxt(eval("file_name"), data, delimiter = ",", header = "V1", comments = "")
     print(str(eval("number_of_files_in_each_benchmark")) + " files"  + " created.")
-    
+
 # Transform data to binary representation
 partname = "xc7v585tffg1157-3"
 benchmark_names = ["syrk", "syr2k", "mvt", "k3mm", "k2mm","gesummv", "gemm", "bicg", "atax"]
