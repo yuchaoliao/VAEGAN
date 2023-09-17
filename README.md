@@ -1,6 +1,6 @@
 # VAEGAN
 
-# For Paper review 
+# For paper review 
 
 # Author Yuchao Liao
 
