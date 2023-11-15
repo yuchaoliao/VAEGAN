@@ -1,6 +1,6 @@
 # VAEGAN
 
-# For ASP-DAC 2024 Paper review
+# For paper review 
 
 # Author Yuchao Liao
 
@@ -8,6 +8,4 @@
 
 # CustomDataset creates batches of files for the networks
 
-# DataTransformation
-
-Transforms float and int numbers into a 32-bit fixed-point binary number with 12 bits as the fraction part.
+# DataTransformation transforms float and int numbers into a 32-bit fixed-point binary number with 12 bits as the fraction part.
