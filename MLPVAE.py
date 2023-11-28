@@ -75,11 +75,13 @@ lr = 0.0001
 ngpu = 1
 # Percentage of training set to use as validation
 valid_size = 0.1
-
+# latent space feature size
 features = 16
+# input binary bit size
+bit_size = 32
 
-# Custom dataset from all filenames 
-input_dataset = CustomDataset(filenames = files, batch_size = batch_size)
+temp = pd.read_csv(open(files[0],'r'))
+number_of_variable = int(len(temp) / bit_size)  # calculate number of variables may include directives
 
 num_train = len(input_dataset)
 indices = list(range(num_train))
@@ -92,10 +94,13 @@ train_idx, valid_idx = indices[split:], indices[:split]
 train_sampler = SubsetRandomSampler(train_idx)
 valid_sampler = SubsetRandomSampler(valid_idx)
 
+#custom dataset from all filenames 
+input_dataset = CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
+
 dataloader = torch.utils.data.DataLoader(input_dataset,batch_size = None, shuffle = True)
 
-input_dataset_all = CustomDataset(filenames = files, batch_size = 1)
-input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files))
+input_dataset_all = CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
+input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
 
 dataloader_all = torch.utils.data.DataLoader(input_dataset_all,batch_size = None, shuffle = True)
 dataloader_all_in_one = torch.utils.data.DataLoader(input_dataset_all_in_one,batch_size = None, shuffle = True)
@@ -106,12 +111,12 @@ class LinearVAE(nn.Module):
         super(LinearVAE, self).__init__()
  
         # encoder
-        self.enc1 = nn.Linear(in_features=20*32, out_features=256)
+        self.enc1 = nn.Linear(in_features=number_of_variable*bit_size, out_features=256)
         self.enc2 = nn.Linear(in_features=256, out_features=features*2)
  
         # decoder 
         self.dec1 = nn.Linear(in_features=features, out_features=256)
-        self.dec2 = nn.Linear(in_features=256, out_features=20*32)
+        self.dec2 = nn.Linear(in_features=256, out_features=number_of_variable*bit_size)
     def reparameterize(self, mu, log_var):
         """
         :param mu: mean from the encoder's latent space
@@ -137,10 +142,6 @@ class LinearVAE(nn.Module):
         reconstruction = torch.sigmoid(self.dec2(x))
         return reconstruction, mu, log_var
     
-model = LinearVAE().to(device)
-print(model)
-optimizer = optim.Adam(model.parameters(), lr=lr)
-criterion = nn.BCELoss(reduction='sum')
 
 def final_loss(bce_loss, mu, logvar):
     """
@@ -190,11 +191,12 @@ def validate(model, dataloader):
             loss = final_loss(bce_loss, mu, logvar)
             running_loss += loss.item()
             
+            reconstruction = torch.round(reconstruction)
             if data.size(0) == batch_size:
-                MMD_score += Metrics.mmd_rbf(torch.round(data).to(device), torch.round(reconstruction).to(device))
-                SSD_score += Metrics.SSD(data.to(device).cpu().detach().numpy(),torch.round(reconstruction).to(device).cpu().detach().numpy())
-                PRD_score += Metrics.PRD(data.to(device).cpu().detach().numpy(),torch.round(reconstruction).to(device).cpu().detach().numpy())
-                COSS_score += Metrics.COSS(data.to(device).cpu().detach().numpy(),torch.round(reconstruction).to(device).cpu().detach().numpy())
+                MMD_score += Metrics.mmd_rbf(data, reconstruction)
+                SSD_score += Metrics.SSD(data, reconstruction)
+                PRD_score += Metrics.PRD(data, reconstruction)
+                COSS_score += Metrics.COSS(data, reconstruction)
             # if  data.size(0) == batch_size:
             #     fid_score += calculate_fretchet(nn.functional.pad(data.view((batch_size,1,18,32)),(0, 0, 7, 7), "constant", 0).repeat(1, 3, 3, 3),
             #                                     nn.functional.pad(reconstruction.view((batch_size,1,18,32)),(0, 0, 7, 7), "constant", 0).repeat(1, 3, 3, 3))
@@ -208,13 +210,20 @@ def validate(model, dataloader):
                 both = torch.cat((data.view(b_size, 1, 20, 32)[:8], 
                                   reconstruction.view(b_size, 1, 20, 32)[:8]))
                 save_image(both.cpu(), f"./outputs/VAE_part1_20_output{epoch}.png", nrow=num_rows)
+                
     val_loss = running_loss/len(dataloader.dataset)
-    MDD = MMD_score/(len(dataloader.dataset)-1)
+    MDD = MMD_score.cpu().numpy()/(len(dataloader.dataset)-1)
     # FID = fid_score/(len(dataloader.dataset)-1)
-    SSDscore = sum(SSD_score/(len(dataloader.dataset)-1))/batch_size
-    PRDscore = sum(PRD_score/(len(dataloader.dataset)-1))/batch_size
-    COSSscore = sum(COSS_score/(len(dataloader.dataset)-1))/batch_size
+    SSDscore = torch.sum(SSD_score/(len(dataloader.dataset)-1)).cpu().numpy()/batch_size
+    PRDscore = torch.sum(PRD_score/(len(dataloader.dataset)-1)).cpu().numpy()/batch_size
+    COSSscore = torch.sum(COSS_score/(len(dataloader.dataset)-1)).cpu().numpy()/batch_size
+    
     return val_loss, MDD, SSDscore, PRDscore, COSSscore
+
+model = LinearVAE().to(device)
+print(model)
+optimizer = optim.Adam(model.parameters(), lr=lr)
+criterion = nn.BCELoss(reduction='sum')
 
 # Train
 train_loss = []
@@ -230,11 +239,11 @@ for epoch in range(num_epochs):
     val_epoch_loss, MMD_epoch, SSD_epoch ,PRD_epoch, COSS_epoch= validate(model, dataloader)
     train_loss.append(train_epoch_loss)
     val_loss.append(val_epoch_loss)
-    MMD_score.append(MMD_epoch.cpu().detach().numpy())
+    MMD_score.append(MMD_epoch)
     # FID_score.append(FID_epoch)
     SSD_score.append(SSD_epoch)
     PRD_score.append(PRD_epoch)
-    COSS_score.append(COSS_epoch.cpu().detach().numpy())
+    COSS_score.append(COSS_epoch)
     print('[%d/%d] \tLoss_train: %.4f\tLoss_val: %.4f\tMMD: %.4f\tSSD: %.4f \tPRD: %.4f \tCOSS: %.4f '
           % (epoch, num_epochs, train_epoch_loss, val_epoch_loss, MMD_epoch,SSD_epoch,PRD_epoch,COSS_epoch))
     

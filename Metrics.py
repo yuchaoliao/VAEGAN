@@ -44,17 +44,19 @@ def mmd_rbf(source, target, kernel_mul=2.0, kernel_num=5, fix_sigma=None):
 
 #SSD metric
 def SSD(y, y_pred):
-    return np.sum(np.square(y - y_pred), axis=1)  # axis 1 is the signal dimension
+    # Assuming y and y_pred are PyTorch tensors and already on the GPU
+    return torch.sum((y - y_pred) ** 2, dim=1)  # dim 1 is the signal dimension
 
 #PRD metric
 def PRD(y, y_pred):
-    N = np.sum(np.square(y_pred - y), axis=1)
-    D = np.sum(np.square(y_pred - np.mean(y)), axis=1)
-
-    PRD = np.sqrt(N/D) * 100
-
+    # Assuming y and y_pred are PyTorch tensors and already on the GPU
+    N = torch.sum((y_pred - y) ** 2, dim=1)
+    D = torch.sum((y_pred - torch.mean(y, dim=0)) ** 2, dim=1)
+    
+    PRD = torch.sqrt(N / D) * 100
     return PRD
 
 #COSS metric
 def COSS(y, y_pred):
-    return torch.nn.functional.cosine_similarity(torch.tensor(y),torch.tensor(y_pred))
+    # Assuming y and y_pred are PyTorch tensors and already on the GPU
+    return torch.nn.functional.cosine_similarity(y,y_pred)

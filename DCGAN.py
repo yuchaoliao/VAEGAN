@@ -85,11 +85,16 @@ lr_D = 0.0001
 beta1 = 0.5
 # Number of GPUs available. Use 0 for CPU mode.
 ngpu = 1
+# input binary bit size
+bit_size = 32
+# calculate number of variables may include directives
+temp = pd.read_csv(open(files[0],'r'))
+number_of_variable = int(len(temp) / bit_size)  
 
 #custom dataset from all filenames 
-input_dataset = CustomDataset(filenames = files, batch_size = batch_size)
-input_dataset_all = CustomDataset(filenames = files, batch_size = 1)
-input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files))
+input_dataset = CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
+input_dataset_all = CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
+input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
 
 dataloader = torch.utils.data.DataLoader(input_dataset,batch_size = None, shuffle = True)
 dataloader_all = torch.utils.data.DataLoader(input_dataset_all,batch_size = None, shuffle = True)
@@ -156,7 +161,6 @@ class Discriminator(nn.Module):
         return self.network(input) 
     
     
-
 
 # Create the generator
 netG = Generator(ngpu).to(device)
@@ -228,6 +232,7 @@ for epoch in range(num_epochs):
     G_loss_temp = 0
     D_loss_temp = 0
     
+    netD.train()
     netG.train()
     for i, data in enumerate(dataloader):
         ############################
@@ -337,9 +342,9 @@ for epoch in range(num_epochs):
             if data.size(0) == batch_size and fake_data.size(0) == batch_size:
                 j +=1
                 MMD_score += Metrics.mmd_rbf(data, fake_data)
-                SSD_score += Metrics.SSD(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
-                PRD_score += Metrics.PRD(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
-                COSS_score += Metrics.COSS(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
+                SSD_score += Metrics.SSD(data,fake_data)
+                PRD_score += Metrics.PRD(data,fake_data)
+                COSS_score += Metrics.COSS(data,fake_data)
                 if j == len(dataloader.dataset) - 2:
                     b_size = data.size(0)
                     num_rows = 8
@@ -349,15 +354,15 @@ for epoch in range(num_epochs):
                     
         # Calculate average metrics per epoch
         MMD_epoch = MMD_score/j
-        SSD_epoch = sum(SSD_score/j)/batch_size
-        PRD_epoch = sum(PRD_score/j)/batch_size
-        COSS_epoch = sum(COSS_score/j)/batch_size
-        
+        SSD_epoch = torch.sum(SSD_score/j)/batch_size
+        PRD_epoch = torch.sum(PRD_score/j)/batch_size
+        COSS_epoch = torch.sum(COSS_score/j)/batch_size
+
     # Save for plot
-    MMD_scores.append(MMD_epoch.cpu().detach().numpy())
-    SSD_scores.append(SSD_epoch)
-    PRD_scores.append(PRD_epoch)
-    COSS_scores.append(COSS_epoch.cpu().detach().numpy())
+    MMD_scores.append(MMD_epoch.cpu().numpy())
+    SSD_scores.append(SSD_epoch.cpu().numpy())
+    PRD_scores.append(PRD_epoch.cpu().numpy())
+    COSS_scores.append(COSS_epoch.cpu().numpy())
     
     # Save model with best MMD score
     if epoch != 0 and epoch != 1 and MMD_epoch < MDD_score_min:
@@ -404,20 +409,21 @@ for i, (data) in enumerate(dataloader):
     if data.shape == fake_data.shape:
         j += 1
         MMD_score += Metrics.mmd_rbf(data, fake_data)
-        SSD_score += Metrics.SSD(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
-        PRD_score += Metrics.PRD(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
-        COSS_score += Metrics.COSS(data.cpu().detach().numpy(),fake_data.cpu().detach().numpy())
+        SSD_score += Metrics.SSD(data,fake_data)
+        PRD_score += Metrics.PRD(data,fake_data)
+        COSS_score += Metrics.COSS(data,fake_data)
         
         if k > 0:
-            plt.imshow(data.view((batch_size,1,20,32))[0][0].cpu(),cmap="gray")
+            plt.imshow(data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
             plt.show()
-            plt.imshow(torch.round(fake_data.view((batch_size,1,20,32))[0][0]).cpu().detach().numpy(),cmap="gray")
+            plt.imshow(fake_data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
+            
             plt.show()
             k -=1
     
 MDDscore = MMD_score.cpu().numpy()/j
-SSDscore = sum(SSD_score/j)/batch_size
-PRDscore = sum(PRD_score/j)/batch_size
+SSDscore = sum(SSD_score.cpu().numpy()/j)/batch_size
+PRDscore = sum(PRD_score.cpu().numpy()/j)/batch_size
 COSSscore = sum(COSS_score.cpu().numpy()/j)/batch_size
 
 # Plot and save metrics
@@ -485,14 +491,14 @@ plt.plot(G_losses, '-bx')
 plt.xlabel("Batch")
 plt.ylabel("Loss")
 plt.legend(['G'])
-plt.title('Loss vs. No. of minibatchs');
+plt.title('Loss vs. No. of minibatchs')
 
 ax = f.add_subplot(1, 2, 2)
 ax.yaxis.tick_right()
 plt.plot(D_losses, '-rx')
 plt.xlabel("Batch")
 plt.legend(['D'])
-plt.title('Loss vs. No. of minibatchs');
+plt.title('Loss vs. No. of minibatchs')
 plt.show()
 
 plt.figure(figsize=(10,5))
