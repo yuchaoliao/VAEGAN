@@ -1,11 +1,22 @@
 # VAEGAN
 
-# For paper review 
+## For Paper Review
 
-# Author Yuchao Liao
+### Author
+Yuchao Liao
 
-# Metrics contains the evaluation metrics (MMD, SSD, PRD, and COSS) for both MLPVAE and DCGAN
+### Overview
+This repository contains the code and supporting documents for the VAEGAN.
 
-# CustomDataset creates batches of files for the networks
+### Features
+- **Metrics**: Includes the evaluation metrics such as Maximum Mean Discrepancy (MMD), Sum of Squared Differences (SSD), Precision-Recall Density (PRD), and Cosine Similarity (COSS) for both MLPVAE and DCGAN models.
 
-# DataTransformation transforms float and int numbers into a 32-bit fixed-point binary number with 12 bits as the fraction part.
+- **CustomDataset**: Manages the creation of batches of files for the networks, facilitating efficient data handling.
+
+- **DataTransformation**: Transforms float and integer numbers into a 32-bit fixed-point binary number, with 12 bits allocated for the fractional part, optimizing data representation for computational processes.
+
+### Usage
+Details on how to use these modules and scripts will be provided in subsequent sections or documents within this repository.
+
+### Contact
+For more information or queries, please contact Yuchao Liao at [yuchaoliao@arizona.edu](mailto:yuchaoliao@arizona.edu).
