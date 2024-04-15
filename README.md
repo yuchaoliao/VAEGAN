@@ -1,6 +1,6 @@
 # VAEGAN
 
-## For Paper Review
+The paper describing the Vaegan approach will appear at GLSVLSI 2024.
 
 ### Author
 Yuchao Liao
