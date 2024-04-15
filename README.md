@@ -2,9 +2,6 @@
 
 The paper describing the Vaegan approach will appear at GLSVLSI 2024.
 
-### Author
-Yuchao Liao
-
 ### Overview
 This repository contains the code and supporting documents for the VAEGAN.
 
