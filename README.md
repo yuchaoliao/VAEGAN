@@ -17,3 +17,16 @@ Details on how to use these modules and scripts will be provided in subsequent s
 
 ### Contact
 For more information or queries, please contact Yuchao Liao at [yuchaoliao@arizona.edu](mailto:yuchaoliao@arizona.edu).
+
+### Citing Vaegan
+If you use the Vaegan in your work, please cite it as follows:
+
+```
+@article{liao2024skip,
+  title={Skip the Benchmark: Generating System-Level High-Level Synthesis Data using Generative Machine Learning},
+  author={Liao, Yuchao and Adegbija, Tosiron and Lysecky, Roman and Tandon, Ravi},
+  journal={arXiv preprint arXiv:2404.14754},
+  year={2024}
+}
+```
+
