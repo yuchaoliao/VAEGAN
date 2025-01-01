@@ -60,7 +60,7 @@ def decimal_converter(num):
 # Create file for each design point and save the transformed number
 def create_csv_files(Input, partname, benchmarkname, number_of_files_in_each_benchmark, number_of_variable_in_each_run):
     try:
-        os.makedirs("./20_polybench/" + benchmarkname +"/" + partname + "/", exist_ok=True)  # Make a directory to save created files.
+        os.makedirs("./Inputs/20_polybench/" + benchmarkname +"/" + partname + "/", exist_ok=True)  # Make a directory to save created files.
     except OSError as error:
         print(error)
     for i in range(number_of_files_in_each_benchmark):
@@ -73,7 +73,7 @@ def create_csv_files(Input, partname, benchmarkname, number_of_files_in_each_ben
                 index = value.find("x")
                 value = str(int(value[0:index]) * int(value[index+1:]))
             data.extend(float_bin(value))
-        file_name = "./20_polybench/" + benchmarkname +"/"+ partname + "/" + benchmarkname + str(eval("i")) + str(eval("Input[i][0]")) + "_20.csv" # This creates file_name
+        file_name = "./Inputs/20_polybench/" + benchmarkname +"/"+ partname + "/" + benchmarkname + str(eval("i")) + str(eval("Input[i][0]")) + "_20.csv" # This creates file_name
         np.savetxt(eval("file_name"), data, delimiter = ",", header = "V1", comments = "")
     print(str(eval("number_of_files_in_each_benchmark")) + " files"  + " created.")
 
@@ -82,7 +82,7 @@ partname = "xc7v585tffg1157-3"
 benchmark_names = ["syrk", "syr2k", "mvt", "k3mm", "k2mm","gesummv", "gemm", "bicg", "atax"]
 
 for benchmark_name in benchmark_names:
-    Input = pd.read_csv("./ML4Accel-Dataset-main/ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/" + partname + "/" + "GAN_input_20.csv")
+    Input = pd.read_csv("./Inputs/ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/" + partname + "/" + "GAN_input_20.csv")
     Input = Input.to_numpy()
 
     number_of_variable_in_each_run = Input.shape[1]-1
@@ -94,10 +94,10 @@ i = 0
 for benchmark_name in benchmark_names:
     print(benchmark_name)
     if i == 0 :
-        files = glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files = glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
         i += 1
     else: 
-        files += glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files += glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
 print("Total number of files: ", len(files))
 print("Showing first 10 files...")
 files[:10]

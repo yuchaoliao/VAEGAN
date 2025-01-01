@@ -50,10 +50,10 @@ i = 0
 for benchmark_name in benchmark_names:
     print(benchmark_name)
     if i == 0 :
-        files = glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files = glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
         i += 1
     else: 
-        files += glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files += glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
 print("Total number of files: ", len(files))
 print("Showing first 10 files...")
 files[:10]
@@ -92,9 +92,9 @@ temp = pd.read_csv(open(files[0],'r'))
 number_of_variable = int(len(temp) / bit_size)  
 
 #custom dataset from all filenames 
-input_dataset = CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
-input_dataset_all = CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
-input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
+input_dataset = CustomDataset.CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
+input_dataset_all = CustomDataset.CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
+input_dataset_all_in_one = CustomDataset.CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
 
 dataloader = torch.utils.data.DataLoader(input_dataset,batch_size = None, shuffle = True)
 dataloader_all = torch.utils.data.DataLoader(input_dataset_all,batch_size = None, shuffle = True)
@@ -226,6 +226,9 @@ SSD_score_min = np.Inf
 PRD_score_min = np.Inf
 COSS_score_max = -1
 
+############################
+# Starting Training
+###########################
 print("Starting Training Loop...")
 
 for epoch in range(num_epochs):
@@ -350,7 +353,7 @@ for epoch in range(num_epochs):
                     num_rows = 8
                     both = torch.cat((data.view(b_size, 1, 20, 32)[:8], 
                                       fake_data.view(b_size, 1, 20, 32)[:8]))
-                    save_image(both.cpu(), f"./outputs/GAN_DCGAN_part1_20_output{epoch}.png", nrow=num_rows)
+                    save_image(both.cpu(), f"./Outputs/GAN_DCGAN_part1_20_output{epoch}.png", nrow=num_rows)
                     
         # Calculate average metrics per epoch
         MMD_epoch = MMD_score/j
@@ -376,8 +379,10 @@ for epoch in range(num_epochs):
     print('MDD_score: {:.4f} \t SSD_score: {:.4f} \t PRD_score: {:.4f} \t COSS_score: {:.4f}'.format(MMD_epoch,SSD_epoch,PRD_epoch,COSS_epoch))
 
 
-# Evaluate the model   
-netG.load_state_dict(torch.load('GAN_DCGAN_netG_part1_20_32_test.pt'))
+############################
+# Evaluate the model 
+###########################
+netG.load_state_dict(torch.load('GAN_DCGAN_netG_part1_20_32.pt'))
 
 fixed_noise_test = torch.randn(len(files), nz, 1, 1, device=device)
 fake = netG(fixed_noise_test).detach().cpu()
@@ -413,20 +418,27 @@ for i, (data) in enumerate(dataloader):
         PRD_score += Metrics.PRD(data,fake_data)
         COSS_score += Metrics.COSS(data,fake_data)
         
-        if k > 0:
-            plt.imshow(data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
-            plt.show()
-            plt.imshow(fake_data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
+        # if k > 0:
+        #     plt.imshow(data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
+        #     plt.show()
+        #     plt.imshow(fake_data.view((batch_size,1,number_of_variable,bit_size))[0][0].cpu(),cmap="gray", vmin=0, vmax=1)
             
-            plt.show()
-            k -=1
+        #     plt.show()
+        #     k -=1
     
 MDDscore = MMD_score.cpu().numpy()/j
 SSDscore = sum(SSD_score.cpu().numpy()/j)/batch_size
 PRDscore = sum(PRD_score.cpu().numpy()/j)/batch_size
 COSSscore = sum(COSS_score.cpu().numpy()/j)/batch_size
 
+print(f"MDDscore: {MDDscore}")
+print(f"SSDscore: {SSDscore}")
+print(f"PRDscore: {PRDscore}")
+print(f"COSSscore: {COSSscore}")
+
+############################
 # Plot and save metrics
+###########################
 f = plt.figure()
 f.add_subplot(1, 2, 1)
 plt.plot(G_losses_epoch, '-bx')
@@ -453,27 +465,27 @@ df4 = pd.DataFrame(COSS_scores)
 df = pd.concat([df1, df2,df3,df4], axis=1)
 
 # Save to csv
-df.to_csv('GAN_DCGAN_netG_part1_20_32_metrics.csv', index=False)
+df.to_csv('/Outputs/GAN_DCGAN_netG_part1_20_32_metrics.csv', index=False)
 
 plt.plot(MMD_scores[1:150], '-rx')
 plt.xlabel("Epoch")
 plt.ylabel("MDD")
 plt.legend(['MDD'])
-plt.savefig('./Figure/GAN_DCGAN_netG_part1_20_32_MMD.png')
+plt.savefig('./Outputs/Figure/GAN_DCGAN_netG_part1_20_32_MMD.png')
 plt.show()
 
 plt.plot(SSD_scores[1:150], '-bx')
 plt.xlabel("Epoch")
 plt.ylabel("SSD")
 plt.legend(['SSD'])
-plt.savefig('./Figure/GAN_DCGAN_netG_part1_20_32_SSD.png')
+plt.savefig('./Outputs/Figure/GAN_DCGAN_netG_part1_20_32_SSD.png')
 plt.show()
 
 plt.plot(PRD_scores[1:150], '-gx')
 plt.xlabel("Epoch")
 plt.ylabel("PRD")
 plt.legend(['PRD'])
-plt.savefig('./Figure/GAN_DCGAN_netG_part1_20_32_PRD.png')
+plt.savefig('./Outputs/Figure/GAN_DCGAN_netG_part1_20_32_PRD.png')
 plt.show()
 
 
@@ -481,7 +493,7 @@ plt.plot(COSS_scores[1:150], '-yx')
 plt.xlabel("Epoch")
 plt.ylabel("COSS")
 plt.legend(['COSS'])
-plt.savefig('./Figure/GAN_DCGAN_netG_part1_20_32_COSSt.png')
+plt.savefig('./Outputs/Figure/GAN_DCGAN_netG_part1_20_32_COSSt.png')
 plt.show()
 
 # Plot loss

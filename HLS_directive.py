@@ -170,7 +170,7 @@ def create_csv_files(Input, Input_with_directive, partname, benchmarkname, numbe
         for directive, value in directives.items():
             data.extend(value[0])
         
-        file_name = "./Polybench_with_directive/" + benchmarkname +"/"+ partname + "/" + benchmarkname + str(eval("i")) + str(eval("Input[i][0]")) + "_" + str(number_of_directive_in_each_run) + ".csv" # This creates file_name
+        file_name = "./Inputs/Polybench_with_directive/" + benchmarkname +"/"+ partname + "/" + benchmarkname + str(eval("i")) + str(eval("Input[i][0]")) + "_" + str(number_of_directive_in_each_run) + ".csv" # This creates file_name
         np.savetxt(eval("file_name"), data, delimiter = ",", header = "V1", comments = "")
         i = i + 1
     print(str(eval("number_of_files_in_each_benchmark")) + " files"  + " created.")
@@ -180,8 +180,8 @@ if __name__ == "__main__":
     benchmark_names = ["syrk", "syr2k","k3mm", "k2mm","gesummv", "gemm", "bicg"] # , "mvt", "atax"
 
     for benchmark_name in benchmark_names:
-        Input = pd.read_csv("./ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/" + partname + "/" + "GAN_input_20.csv")
-        file_path = "./ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/scripts/" + "hls.tcl"
+        Input = pd.read_csv("./Inputs/ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/" + partname + "/" + "GAN_input_20.csv")
+        file_path = "./Inputs/ML4Accel-Dataset-main/fpga_ml_dataset/HLS_dataset/polybench/" + benchmark_name +"/scripts/" + "hls.tcl"
         Input = Input.to_numpy()
         Input_with_directive, number_of_directive_in_each_run = convert_directives_to_binary(file_path)
 

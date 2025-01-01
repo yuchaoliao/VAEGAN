@@ -48,10 +48,10 @@ i = 0
 for benchmark_name in benchmark_names:
     print(benchmark_name)
     if i == 0 :
-        files = glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files = glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
         i += 1
     else: 
-        files += glob.glob("./20_polybench/" + benchmark_name + "/" + partname + "/*")
+        files += glob.glob("./Inputs/20_polybench/" + benchmark_name + "/" + partname + "/*")
 print("Total number of files: ", len(files))
 print("Showing first 10 files...")
 files[:10]
@@ -83,6 +83,10 @@ bit_size = 32
 temp = pd.read_csv(open(files[0],'r'))
 number_of_variable = int(len(temp) / bit_size)  # calculate number of variables may include directives
 
+#custom dataset from all filenames 
+input_dataset = CustomDataset.CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
+
+
 num_train = len(input_dataset)
 indices = list(range(num_train))
 np.random.seed(random_seed)
@@ -94,16 +98,28 @@ train_idx, valid_idx = indices[split:], indices[:split]
 train_sampler = SubsetRandomSampler(train_idx)
 valid_sampler = SubsetRandomSampler(valid_idx)
 
-#custom dataset from all filenames 
-input_dataset = CustomDataset(filenames = files, batch_size = batch_size, bit_size = bit_size)
-
 dataloader = torch.utils.data.DataLoader(input_dataset,batch_size = None, shuffle = True)
 
-input_dataset_all = CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
-input_dataset_all_in_one = CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
+input_dataset_all = CustomDataset.CustomDataset(filenames = files, batch_size = 1, bit_size = bit_size)
+input_dataset_all_in_one = CustomDataset.CustomDataset(filenames = files, batch_size = len(files), bit_size = bit_size)
 
 dataloader_all = torch.utils.data.DataLoader(input_dataset_all,batch_size = None, shuffle = True)
 dataloader_all_in_one = torch.utils.data.DataLoader(input_dataset_all_in_one,batch_size = None, shuffle = True)
+
+# Calculate the number of samples to include in each set
+dataset_size = len(input_dataset)
+indices = list(range(dataset_size))
+split = int(np.floor(0.8 * dataset_size))
+
+np.random.shuffle(indices)
+
+# Create data samplers and loaders
+train_indices, val_indices = indices[:split], indices[split:]
+train_sampler = SubsetRandomSampler(train_indices)
+valid_sampler = SubsetRandomSampler(val_indices)
+
+train_loader = torch.utils.data.DataLoader(input_dataset, batch_size=None, sampler=train_sampler)
+valid_loader = torch.utils.data.DataLoader(input_dataset, batch_size=None, sampler=valid_sampler)
 
 # Define MLP VAE
 class LinearVAE(nn.Module):
@@ -209,7 +225,7 @@ def validate(model, dataloader):
                 num_rows = 8
                 both = torch.cat((data.view(b_size, 1, 20, 32)[:8], 
                                   reconstruction.view(b_size, 1, 20, 32)[:8]))
-                save_image(both.cpu(), f"./outputs/VAE_part1_20_output{epoch}.png", nrow=num_rows)
+                save_image(both.cpu(), f"./Outputs/VAE_part1_20_output{epoch}.png", nrow=num_rows)
                 
     val_loss = running_loss/len(dataloader.dataset)
     MDD = MMD_score.cpu().numpy()/(len(dataloader.dataset)-1)
@@ -258,7 +274,7 @@ df4 = pd.DataFrame(COSS_score)
 df = pd.concat([df1, df2,df3,df4], axis=1)
 
 # save to csv
-df.to_csv('VAE_MLP_part1_20_32_metrics.csv', index=False)
+df.to_csv('/Outputs/VAE_MLP_part1_20_32_metrics.csv', index=False)
 
 torch.save(model.state_dict(), 'VAE_MLP_part1_20_32.pt')
 f = plt.figure()
@@ -282,21 +298,21 @@ plt.plot(MMD_score, '-rx')
 plt.xlabel("Epoch")
 plt.ylabel("MDD")
 plt.legend(['MDD'])
-plt.savefig('./Figure/VAE_MLP_part1_20_32_MMD.png')
+plt.savefig('./Outputs/Figure/VAE_MLP_part1_20_32_MMD.png')
 plt.show()
 
 plt.plot(SSD_score, '-bx')
 plt.xlabel("Epoch")
 plt.ylabel("SSD")
 plt.legend(['SSD'])
-plt.savefig('./Figure/VAE_MLP_part1_20_32_SSD.png')
+plt.savefig('./Outputs/Figure/VAE_MLP_part1_20_32_SSD.png')
 plt.show()
 
 plt.plot(PRD_score, '-gx')
 plt.xlabel("Epoch")
 plt.ylabel("PRD")
 plt.legend(['PRD'])
-plt.savefig('./Figure/VAE_MLP_part1_20_32_PRD.png')
+plt.savefig('./Outputs/Figure/VAE_MLP_part1_20_32_PRD.png')
 plt.show()
 
 
@@ -304,5 +320,5 @@ plt.plot(COSS_score, '-yx')
 plt.xlabel("Epoch")
 plt.ylabel("COSS")
 plt.legend(['COSS'])
-plt.savefig('./Figure/VAE_MLP_part1_20_32_COSS.png')
+plt.savefig('./Outputs/Figure/VAE_MLP_part1_20_32_COSS.png')
 plt.show()
