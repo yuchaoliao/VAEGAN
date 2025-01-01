@@ -1,6 +1,6 @@
 # VAEGAN
 
-The paper describing the Vaegan approach will appear at GLSVLSI 2024.
+The paper describing the Vaegan approach appears at the Great Lakes Symposium on VLSI 2024 (GLSVLSI 2024).
 
 ### Overview
 This repository contains the code and supporting documents for the VAEGAN.
@@ -22,11 +22,12 @@ For more information or queries, please contact Yuchao Liao at [yuchaoliao@arizo
 If you use the Vaegan in your work, please cite it as follows:
 
 ```
-@article{liao2024skip,
-  title={Skip the Benchmark: Generating System-Level High-Level Synthesis Data using Generative Machine Learning},
-  author={Liao, Yuchao and Adegbija, Tosiron and Lysecky, Roman and Tandon, Ravi},
-  journal={arXiv preprint arXiv:2404.14754},
-  year={2024}
+@inproceedings{10.1145/3649476.3658738,
+author = {Liao, Yuchao and Adegbija, Tosiron and Lysecky, Roman and Tandon, Ravi},
+title = {Skip the Benchmark: Generating System-Level High-Level Synthesis Data using Generative Machine Learning},
+year = {2024},
+booktitle = {Proceedings of the Great Lakes Symposium on VLSI 2024},
+series = {GLSVLSI '24}
 }
 ```
 
